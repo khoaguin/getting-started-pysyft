@@ -1,0 +1,340 @@
+{
+  "cells": [
+    {
+      "cell_type": "code",
+      "source": [
+        "import torch\n",
+        "import syft as sy\n",
+        "import pandas as pd"
+      ],
+      "outputs": [],
+      "execution_count": 6,
+      "metadata": {
+        "gather": {
+          "logged": 1631105359542
+        }
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Make the VM and its client"
+      ],
+      "metadata": {
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "bob = sy.VirtualMachine(name=\"Bob\")\n",
+        "client = bob.get_client()"
+      ],
+      "outputs": [],
+      "execution_count": 2,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1631105298711
+        }
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Sending data to the client"
+      ],
+      "metadata": {
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "data = {\"A\": [1, 2]}\n",
+        "pd.json_normalize(data)"
+      ],
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "execution_count": 3,
+          "data": {
+            "text/plain": "        A\n0  [1, 2]",
+            "text/html": "<div>\n<style scoped>\n    .dataframe tbody tr th:only-of-type {\n        vertical-align: middle;\n    }\n\n    .dataframe tbody tr th {\n        vertical-align: top;\n    }\n\n    .dataframe thead th {\n        text-align: right;\n    }\n</style>\n<table border=\"1\" class=\"dataframe\">\n  <thead>\n    <tr style=\"text-align: right;\">\n      <th></th>\n      <th>A</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th>0</th>\n      <td>[1, 2]</td>\n    </tr>\n  </tbody>\n</table>\n</div>"
+          },
+          "metadata": {}
+        }
+      ],
+      "execution_count": 3,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1631105313626
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "sy_data = sy.lib.python.Dict(data)\n",
+        "data_ptr = sy_data.send(client)"
+      ],
+      "outputs": [],
+      "execution_count": 4,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1631105330274
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "pandas_remote = client.pandas\n",
+        "json_method = pandas_remote.json_normalize\n",
+        "dataFrame_ptr = json_method(data_ptr)\n",
+        "print(dataFrame_ptr.get_copy())"
+      ],
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": "        A\n0  [1, 2]\n"
+        }
+      ],
+      "execution_count": 5,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1631105334866
+        }
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Checking device (cuda or CPU)"
+      ],
+      "metadata": {
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "remote_torch = client.torch\n",
+        "remote_torch"
+      ],
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "execution_count": 9,
+          "data": {
+            "text/plain": "Module:\n\t.Tensor -> <syft.ast.klass.Class object at 0x7f2335e63640>\n\t.BFloat16Tensor -> <syft.ast.klass.Class object at 0x7f2335e636a0>\n\t.BoolTensor -> <syft.ast.klass.Class object at 0x7f2335e63700>\n\t.ByteTensor -> <syft.ast.klass.Class object at 0x7f2335e63760>\n\t.CharTensor -> <syft.ast.klass.Class object at 0x7f2335e637c0>\n\t.DoubleTensor -> <syft.ast.klass.Class object at 0x7f2335e63820>\n\t.FloatTensor -> <syft.ast.klass.Class object at 0x7f2335e63880>\n\t.HalfTensor -> <syft.ast.klass.Class object at 0x7f2335e638e0>\n\t.IntTensor -> <syft.ast.klass.Class object at 0x7f2335e63940>\n\t.LongTensor -> <syft.ast.klass.Class object at 0x7f2335e639a0>\n\t.ShortTensor -> <syft.ast.klass.Class object at 0x7f2335e63a00>\n\t.nn -> Module:\n\t\t.Parameter -> <syft.ast.klass.Class object at 0x7f2335e63b20>\n\t\t.Module -> <syft.ast.klass.Class object at 0x7f233582b040>\n\t\t.Conv2d -> <syft.ast.klass.Class object at 0x7f233582b520>\n\t\t.Dropout2d -> <syft.ast.klass.Class object at 0x7f233582b940>\n\t\t.Linear -> <syft.ast.klass.Class object at 0x7f233582bca0>\n\t\t.functional -> Module:\n\t\t\t.relu -> <syft.ast.callable.Callable object at 0x7f23358375e0>\n\t\t\t.gelu -> <syft.ast.callable.Callable object at 0x7f2335837640>\n\t\t\t.max_pool2d -> <syft.ast.callable.Callable object at 0x7f23358376a0>\n\t\t\t.log_softmax -> <syft.ast.callable.Callable object at 0x7f2335837700>\n\t\t\t.cosine_embedding_loss -> <syft.ast.callable.Callable object at 0x7f23358434c0>\n\t\t\t.ctc_loss -> <syft.ast.callable.Callable object at 0x7f2335843520>\n\t\t\t.hinge_embedding_loss -> <syft.ast.callable.Callable object at 0x7f23358435e0>\n\t\t\t.l1_loss -> <syft.ast.callable.Callable object at 0x7f2335843640>\n\t\t\t.margin_ranking_loss -> <syft.ast.callable.Callable object at 0x7f2335843700>\n\t\t\t.mse_loss -> <syft.ast.callable.Callable object at 0x7f2335843760>\n\t\t\t.multi_margin_loss -> <syft.ast.callable.Callable object at 0x7f2335843820>\n\t\t\t.multilabel_margin_loss -> <syft.ast.callable.Callable object at 0x7f23358438e0>\n\t\t\t.multilabel_soft_margin_loss -> <syft.ast.callable.Callable object at 0x7f23358439a0>\n\t\t\t.nll_loss -> <syft.ast.callable.Callable object at 0x7f2335843a00>\n\t\t\t.cross_entropy -> <syft.ast.callable.Callable object at 0x7f2335843ac0>\n\t\t\t.poisson_nll_loss -> <syft.ast.callable.Callable object at 0x7f2335843b80>\n\t\t\t.smooth_l1_loss -> <syft.ast.callable.Callable object at 0x7f2335843c40>\n\t\t\t.soft_margin_loss -> <syft.ast.callable.Callable object at 0x7f2335843d00>\n\t\t\t.triplet_margin_loss -> <syft.ast.callable.Callable object at 0x7f2335843dc0>\n\n\t\t.Sequential -> <syft.ast.klass.Class object at 0x7f2335843100>\n\t\t.AdaptiveLogSoftmaxWithLoss -> <syft.ast.klass.Class object at 0x7f2335843e80>\n\t\t.BCELoss -> <syft.ast.klass.Class object at 0x7f233584d040>\n\t\t.BCEWithLogitsLoss -> <syft.ast.klass.Class object at 0x7f233584d100>\n\t\t.CTCLoss -> <syft.ast.klass.Class object at 0x7f233584d220>\n\t\t.CrossEntropyLoss -> <syft.ast.klass.Class object at 0x7f233584d2e0>\n\t\t.CosineEmbeddingLoss -> <syft.ast.klass.Class object at 0x7f233584d400>\n\t\t.HingeEmbeddingLoss -> <syft.ast.klass.Class object at 0x7f233584d520>\n\t\t.KLDivLoss -> <syft.ast.klass.Class object at 0x7f233584d640>\n\t\t.L1Loss -> <syft.ast.klass.Class object at 0x7f233584d700>\n\t\t.MSELoss -> <syft.ast.klass.Class object at 0x7f233584d7c0>\n\t\t.MarginRankingLoss -> <syft.ast.klass.Class object at 0x7f233584d880>\n\t\t.MultiLabelMarginLoss -> <syft.ast.klass.Class object at 0x7f233584d9a0>\n\t\t.MultiLabelSoftMarginLoss -> <syft.ast.klass.Class object at 0x7f233584db20>\n\t\t.MultiMarginLoss -> <syft.ast.klass.Class object at 0x7f233584dc40>\n\t\t.NLLLoss -> <syft.ast.klass.Class object at 0x7f233584dd60>\n\t\t.NLLLoss2d -> <syft.ast.klass.Class object at 0x7f233584de20>\n\t\t.PoissonNLLLoss -> <syft.ast.klass.Class object at 0x7f233584dee0>\n\t\t.SmoothL1Loss -> <syft.ast.klass.Class object at 0x7f2336497040>\n\t\t.SoftMarginLoss -> <syft.ast.klass.Class object at 0x7f2336497100>\n\t\t.TripletMarginLoss -> <syft.ast.klass.Class object at 0x7f2336497220>\n\t\t.AdaptiveAvgPool1d -> <syft.ast.klass.Class object at 0x7f2336497340>\n\t\t.AdaptiveAvgPool2d -> <syft.ast.klass.Class object at 0x7f23364979a0>\n\t\t.AdaptiveAvgPool3d -> <syft.ast.klass.Class object at 0x7f23364d3040>\n\t\t.AdaptiveMaxPool1d -> <syft.ast.klass.Class object at 0x7f23364d36a0>\n\t\t.AdaptiveMaxPool2d -> <syft.ast.klass.Class object at 0x7f23364d3d00>\n\t\t.AdaptiveMaxPool3d -> <syft.ast.klass.Class object at 0x7f233649d3a0>\n\t\t.AlphaDropout -> <syft.ast.klass.Class object at 0x7f233649da00>\n\t\t.AvgPool1d -> <syft.ast.klass.Class object at 0x7f233649dfa0>\n\t\t.AvgPool2d -> <syft.ast.klass.Class object at 0x7f23364a6460>\n\t\t.AvgPool3d -> <syft.ast.klass.Class object at 0x7f23364a68e0>\n\t\t.BatchNorm1d -> <syft.ast.klass.Class object at 0x7f23364a6d60>\n\t\t.BatchNorm2d -> <syft.ast.klass.Class object at 0x7f23364a8220>\n\t\t.BatchNorm3d -> <syft.ast.klass.Class object at 0x7f23364a86a0>\n\t\t.Bilinear -> <syft.ast.klass.Class object at 0x7f23364a8b20>\n\t\t.CELU -> <syft.ast.klass.Class object at 0x7f23364a8fa0>\n\t\t.ConstantPad1d -> <syft.ast.klass.Class object at 0x7f23364ae400>\n\t\t.ConstantPad2d -> <syft.ast.klass.Class object at 0x7f23364ae9a0>\n\t\t.ConstantPad3d -> <syft.ast.klass.Class object at 0x7f23364aef40>\n\t\t.Container -> <syft.ast.klass.Class object at 0x7f23364b5520>\n\t\t.Conv1d -> <syft.ast.klass.Class object at 0x7f23364b59a0>\n\t\t.Conv3d -> <syft.ast.klass.Class object at 0x7f23364b5dc0>\n\t\t.ConvTranspose1d -> <syft.ast.klass.Class object at 0x7f23364bb220>\n\t\t.ConvTranspose2d -> <syft.ast.klass.Class object at 0x7f23364bb820>\n\t\t.ConvTranspose3d -> <syft.ast.klass.Class object at 0x7f23364bbe20>\n\t\t.CosineSimilarity -> <syft.ast.klass.Class object at 0x7f23364c2460>\n\t\t.CrossMapLRN2d -> <syft.ast.klass.Class object at 0x7f23364c2a60>\n\t\t.DataParallel -> <syft.ast.klass.Class object at 0x7f23364cb040>\n\t\t.Dropout -> <syft.ast.klass.Class object at 0x7f23364cb5e0>\n\t\t.Dropout3d -> <syft.ast.klass.Class object at 0x7f23364cbb80>\n\t\t.ELU -> <syft.ast.klass.Class object at 0x7f23364cd040>\n\t\t.Embedding -> <syft.ast.klass.Class object at 0x7f23364cd400>\n\t\t.EmbeddingBag -> <syft.ast.klass.Class object at 0x7f23364cd880>\n\t\t.FeatureAlphaDropout -> <syft.ast.klass.Class object at 0x7f23364cde20>\n\t\t.Flatten -> <syft.ast.klass.Class object at 0x7f23364d0580>\n\t\t.Fold -> <syft.ast.klass.Class object at 0x7f23364d0a00>\n\t\t.FractionalMaxPool2d -> <syft.ast.klass.Class object at 0x7f23364d0e20>\n\t\t.FractionalMaxPool3d -> <syft.ast.klass.Class object at 0x7f2336318580>\n\t\t.GELU -> <syft.ast.klass.Class object at 0x7f2336318ca0>\n\t\t.GLU -> <syft.ast.klass.Class object at 0x7f233631a100>\n\t\t.GRU -> <syft.ast.klass.Class object at 0x7f233631a4c0>\n\t\t.GRUCell -> <syft.ast.klass.Class object at 0x7f233631a880>\n\t\t.GroupNorm -> <syft.ast.klass.Class object at 0x7f233631ad00>\n\t\t.Hardshrink -> <syft.ast.klass.Class object at 0x7f23363201c0>\n\t\t.Hardsigmoid -> <syft.ast.klass.Class object at 0x7f2336320640>\n\t\t.Hardswish -> <syft.ast.klass.Class object at 0x7f2336320a00>\n\t\t.Hardtanh -> <syft.ast.klass.Class object at 0x7f2336320dc0>\n\t\t.Identity -> <syft.ast.klass.Class object at 0x7f2336328280>\n\t\t.InstanceNorm1d -> <syft.ast.klass.Class object at 0x7f2336328700>\n\t\t.InstanceNorm2d -> <syft.ast.klass.Class object at 0x7f2336328d00>\n\t\t.InstanceNorm3d -> <syft.ast.klass.Class object at 0x7f2336330340>\n\t\t.LPPool1d -> <syft.ast.klass.Class object at 0x7f2336330940>\n\t\t.LPPool2d -> <syft.ast.klass.Class object at 0x7f2336330dc0>\n\t\t.LSTM -> <syft.ast.klass.Class object at 0x7f2336333280>\n\t\t.LSTMCell -> <syft.ast.klass.Class object at 0x7f23363336a0>\n\t\t.LayerNorm -> <syft.ast.klass.Class object at 0x7f2336333b20>\n\t\t.LeakyReLU -> <syft.ast.klass.Class object at 0x7f2336333fa0>\n\t\t.LocalResponseNorm -> <syft.ast.klass.Class object at 0x7f233633a460>\n\t\t.LogSigmoid -> <syft.ast.klass.Class object at 0x7f233633aac0>\n\t\t.LogSoftmax -> <syft.ast.klass.Class object at 0x7f233633af40>\n\t\t.MaxPool1d -> <syft.ast.klass.Class object at 0x7f233633e400>\n\t\t.MaxPool2d -> <syft.ast.klass.Class object at 0x7f233633e880>\n\t\t.MaxPool3d -> <syft.ast.klass.Class object at 0x7f233633ed00>\n\t\t.MaxUnpool1d -> <syft.ast.klass.Class object at 0x7f23363491c0>\n\t\t.MaxUnpool2d -> <syft.ast.klass.Class object at 0x7f2336349640>\n\t\t.MaxUnpool3d -> <syft.ast.klass.Class object at 0x7f2336349ac0>\n\t\t.ModuleDict -> <syft.ast.klass.Class object at 0x7f2336349f40>\n\t\t.ModuleList -> <syft.ast.klass.Class object at 0x7f2336352400>\n\t\t.MultiheadAttention -> <syft.ast.klass.Class object at 0x7f2336352940>\n\t\t.PReLU -> <syft.ast.klass.Class object at 0x7f2336306040>\n\t\t.PairwiseDistance -> <syft.ast.klass.Class object at 0x7f2336306460>\n\t\t.PixelShuffle -> <syft.ast.klass.Class object at 0x7f2336306a60>\n\t\t.RNN -> <syft.ast.klass.Class object at 0x7f23362dd040>\n\t\t.RNNBase -> <syft.ast.klass.Class object at 0x7f23362dd400>\n\t\t.RNNCell -> <syft.ast.klass.Class object at 0x7f23362dd880>\n\t\t.RNNCellBase -> <syft.ast.klass.Class object at 0x7f23362ddd00>\n\t\t.RReLU -> <syft.ast.klass.Class object at 0x7f23362e61c0>\n\t\t.ReLU -> <syft.ast.klass.Class object at 0x7f23362e65e0>\n\t\t.ReLU6 -> <syft.ast.klass.Class object at 0x7f23362e6a00>\n\t\t.ReflectionPad1d -> <syft.ast.klass.Class object at 0x7f23362e6e20>\n\t\t.ReflectionPad2d -> <syft.ast.klass.Class object at 0x7f23362e8460>\n\t\t.ReplicationPad1d -> <syft.ast.klass.Class object at 0x7f23362e8a60>\n\t\t.ReplicationPad2d -> <syft.ast.klass.Class object at 0x7f23362ed0a0>\n\t\t.ReplicationPad3d -> <syft.ast.klass.Class object at 0x7f23362ed6a0>\n\t\t.SELU -> <syft.ast.klass.Class object at 0x7f23362edca0>\n\t\t.Sigmoid -> <syft.ast.klass.Class object at 0x7f23362f3280>\n\t\t.Softmax -> <syft.ast.klass.Class object at 0x7f23362f3700>\n\t\t.Softmax2d -> <syft.ast.klass.Class object at 0x7f23362f3b80>\n\t\t.Softmin -> <syft.ast.klass.Class object at 0x7f23362fb040>\n\t\t.Softplus -> <syft.ast.klass.Class object at 0x7f23362fb4c0>\n\t\t.Softshrink -> <syft.ast.klass.Class object at 0x7f23362fb940>\n\t\t.Softsign -> <syft.ast.klass.Class object at 0x7f23362fbdc0>\n\t\t.SyncBatchNorm -> <syft.ast.klass.Class object at 0x7f2336300280>\n\t\t.Tanh -> <syft.ast.klass.Class object at 0x7f2336300820>\n\t\t.Tanhshrink -> <syft.ast.klass.Class object at 0x7f2336300c40>\n\t\t.Threshold -> <syft.ast.klass.Class object at 0x7f233630b100>\n\t\t.Transformer -> <syft.ast.klass.Class object at 0x7f233630b580>\n\t\t.TransformerDecoder -> <syft.ast.klass.Class object at 0x7f233630ba00>\n\t\t.TransformerDecoderLayer -> <syft.ast.klass.Class object at 0x7f233630e160>\n\t\t.TransformerEncoder -> <syft.ast.klass.Class object at 0x7f233630e7c0>\n\t\t.TransformerEncoderLayer -> <syft.ast.klass.Class object at 0x7f233630eee0>\n\t\t.Unfold -> <syft.ast.klass.Class object at 0x7f2336095580>\n\t\t.Upsample -> <syft.ast.klass.Class object at 0x7f23360959a0>\n\t\t.UpsamplingBilinear2d -> <syft.ast.klass.Class object at 0x7f2336095e20>\n\t\t.UpsamplingNearest2d -> <syft.ast.klass.Class object at 0x7f233609e520>\n\t\t.ZeroPad2d -> <syft.ast.klass.Class object at 0x7f233609ec40>\n\n\t.return_types -> Module:\n\t\t.cummax -> <syft.ast.klass.Class object at 0x7f2335bb1880>\n\t\t.cummin -> <syft.ast.klass.Class object at 0x7f2335bb18e0>\n\t\t.eig -> <syft.ast.klass.Class object at 0x7f2335bb1940>\n\t\t.kthvalue -> <syft.ast.klass.Class object at 0x7f2335bb19a0>\n\t\t.lstsq -> <syft.ast.klass.Class object at 0x7f2335bb1a00>\n\t\t.slogdet -> <syft.ast.klass.Class object at 0x7f2335bb1a60>\n\t\t.qr -> <syft.ast.klass.Class object at 0x7f2335bb1ac0>\n\t\t.mode -> <syft.ast.klass.Class object at 0x7f2335bb1b20>\n\t\t.solve -> <syft.ast.klass.Class object at 0x7f2335bb1b80>\n\t\t.sort -> <syft.ast.klass.Class object at 0x7f2335bb1be0>\n\t\t.symeig -> <syft.ast.klass.Class object at 0x7f2335bb1c40>\n\t\t.topk -> <syft.ast.klass.Class object at 0x7f2335bb1ca0>\n\t\t.triangular_solve -> <syft.ast.klass.Class object at 0x7f2335bb1d60>\n\t\t.svd -> <syft.ast.klass.Class object at 0x7f2335bb1dc0>\n\t\t.geqrf -> <syft.ast.klass.Class object at 0x7f2335bb1e20>\n\t\t.median -> <syft.ast.klass.Class object at 0x7f2335bb1e80>\n\t\t.max -> <syft.ast.klass.Class object at 0x7f2335bb1ee0>\n\t\t.min -> <syft.ast.klass.Class object at 0x7f2335bb1f40>\n\n\t.Size -> <syft.ast.klass.Class object at 0x7f233594b0a0>\n\t.set_grad_enabled -> <syft.ast.klass.Class object at 0x7f233594b3a0>\n\t.zeros -> <syft.ast.callable.Callable object at 0x7f233594b400>\n\t.randn -> <syft.ast.callable.Callable object at 0x7f233594b460>\n\t.ones_like -> <syft.ast.callable.Callable object at 0x7f233594b4c0>\n\t.arange -> <syft.ast.callable.Callable object at 0x7f233594b5e0>\n\t.abs_ -> <syft.ast.callable.Callable object at 0x7f233594b640>\n\t.abs -> <syft.ast.callable.Callable object at 0x7f233594b6a0>\n\t.acos_ -> <syft.ast.callable.Callable object at 0x7f233594b700>\n\t.acos -> <syft.ast.callable.Callable object at 0x7f233594b760>\n\t.add -> <syft.ast.callable.Callable object at 0x7f233594b7c0>\n\t.addbmm -> <syft.ast.callable.Callable object at 0x7f233594b820>\n\t.addcdiv -> <syft.ast.callable.Callable object at 0x7f233594b880>\n\t.addcmul -> <syft.ast.callable.Callable object at 0x7f233594b8e0>\n\t.addmm -> <syft.ast.callable.Callable object at 0x7f233594b940>\n\t.addmv_ -> <syft.ast.callable.Callable object at 0x7f233594b9a0>\n\t.addmv -> <syft.ast.callable.Callable object at 0x7f233594ba00>\n\t.addr -> <syft.ast.callable.Callable object at 0x7f233594ba60>\n\t.all -> <syft.ast.callable.Callable object at 0x7f233594bac0>\n\t.allclose -> <syft.ast.callable.Callable object at 0x7f233594bb20>\n\t.angle -> <syft.ast.callable.Callable object at 0x7f233594bb80>\n\t.any -> <syft.ast.callable.Callable object at 0x7f233594bbe0>\n\t.argmax -> <syft.ast.callable.Callable object at 0x7f233594bc40>\n\t.argmin -> <syft.ast.callable.Callable object at 0x7f233594bca0>\n\t.argsort -> <syft.ast.callable.Callable object at 0x7f233594bd00>\n\t.as_strided_ -> <syft.ast.callable.Callable object at 0x7f233594bd60>\n\t.as_strided -> <syft.ast.callable.Callable object at 0x7f233594bdc0>\n\t.asin_ -> <syft.ast.callable.Callable object at 0x7f233594be20>\n\t.asin -> <syft.ast.callable.Callable object at 0x7f233594be80>\n\t.atan_ -> <syft.ast.callable.Callable object at 0x7f233594bee0>\n\t.atan -> <syft.ast.callable.Callable object at 0x7f233594bf40>\n\t.atan2 -> <syft.ast.callable.Callable object at 0x7f233594bfa0>\n\t.baddbmm -> <syft.ast.callable.Callable object at 0x7f2335949040>\n\t.bernoulli -> <syft.ast.callable.Callable object at 0x7f23359490a0>\n\t.bitwise_and -> <syft.ast.callable.Callable object at 0x7f2335949100>\n\t.bitwise_not -> <syft.ast.callable.Callable object at 0x7f2335949160>\n\t.bitwise_or -> <syft.ast.callable.Callable object at 0x7f23359491c0>\n\t.bitwise_xor -> <syft.ast.callable.Callable object at 0x7f2335949220>\n\t.bmm -> <syft.ast.callable.Callable object at 0x7f2335949280>\n\t.cat -> <syft.ast.callable.Callable object at 0x7f23359492e0>\n\t.ceil_ -> <syft.ast.callable.Callable object at 0x7f2335949340>\n\t.ceil -> <syft.ast.callable.Callable object at 0x7f23359493a0>\n\t.cholesky_inverse -> <syft.ast.callable.Callable object at 0x7f2335949400>\n\t.cholesky_solve -> <syft.ast.callable.Callable object at 0x7f2335949460>\n\t.cholesky -> <syft.ast.callable.Callable object at 0x7f23359494c0>\n\t.chunk -> <syft.ast.callable.Callable object at 0x7f2335949520>\n\t.clamp_ -> <syft.ast.callable.Callable object at 0x7f2335949580>\n\t.clamp_max_ -> <syft.ast.callable.Callable object at 0x7f23359495e0>\n\t.clamp_max -> <syft.ast.callable.Callable object at 0x7f2335949640>\n\t.clamp_min_ -> <syft.ast.callable.Callable object at 0x7f23359496a0>\n\t.clamp_min -> <syft.ast.callable.Callable object at 0x7f2335949700>\n\t.clamp -> <syft.ast.callable.Callable object at 0x7f2335949760>\n\t.clone -> <syft.ast.callable.Callable object at 0x7f23359497c0>\n\t.conj -> <syft.ast.callable.Callable object at 0x7f2335949820>\n\t.cos_ -> <syft.ast.callable.Callable object at 0x7f2335949880>\n\t.cos -> <syft.ast.callable.Callable object at 0x7f23359498e0>\n\t.cosh_ -> <syft.ast.callable.Callable object at 0x7f2335949940>\n\t.cosh -> <syft.ast.callable.Callable object at 0x7f23359499a0>\n\t.cross -> <syft.ast.callable.Callable object at 0x7f2335949a00>\n\t.cummax -> <syft.ast.callable.Callable object at 0x7f2335949a60>\n\t.cummin -> <syft.ast.callable.Callable object at 0x7f2335949ac0>\n\t.cumprod -> <syft.ast.callable.Callable object at 0x7f2335949b20>\n\t.cumsum -> <syft.ast.callable.Callable object at 0x7f2335949b80>\n\t.dequantize -> <syft.ast.callable.Callable object at 0x7f2335949be0>\n\t.det -> <syft.ast.callable.Callable object at 0x7f2335949c40>\n\t.detach -> <syft.ast.callable.Callable object at 0x7f2335949ca0>\n\t.diag_embed -> <syft.ast.callable.Callable object at 0x7f2335949d00>\n\t.diag -> <syft.ast.callable.Callable object at 0x7f2335949d60>\n\t.diagflat -> <syft.ast.callable.Callable object at 0x7f2335949dc0>\n\t.diagonal -> <syft.ast.callable.Callable object at 0x7f2335949e20>\n\t.digamma -> <syft.ast.callable.Callable object at 0x7f2335949e80>\n\t.dist -> <syft.ast.callable.Callable object at 0x7f2335949ee0>\n\t.div -> <syft.ast.callable.Callable object at 0x7f2335949f40>\n\t.dot -> <syft.ast.callable.Callable object at 0x7f2335949fa0>\n\t.eig -> <syft.ast.callable.Callable object at 0x7f2335951040>\n\t.eq -> <syft.ast.callable.Callable object at 0x7f23359510a0>\n\t.equal -> <syft.ast.callable.Callable object at 0x7f2335951100>\n\t.erf_ -> <syft.ast.callable.Callable object at 0x7f2335951160>\n\t.erf -> <syft.ast.callable.Callable object at 0x7f23359511c0>\n\t.erfc_ -> <syft.ast.callable.Callable object at 0x7f2335951220>\n\t.erfc -> <syft.ast.callable.Callable object at 0x7f2335951280>\n\t.erfinv -> <syft.ast.callable.Callable object at 0x7f23359512e0>\n\t.exp_ -> <syft.ast.callable.Callable object at 0x7f2335951340>\n\t.exp -> <syft.ast.callable.Callable object at 0x7f23359513a0>\n\t.expm1_ -> <syft.ast.callable.Callable object at 0x7f2335951400>\n\t.expm1 -> <syft.ast.callable.Callable object at 0x7f2335951460>\n\t.fft -> Module:\n\n\t.fill_ -> <syft.ast.callable.Callable object at 0x7f2335951520>\n\t.flatten -> <syft.ast.callable.Callable object at 0x7f2335951580>\n\t.flip -> <syft.ast.callable.Callable object at 0x7f23359515e0>\n\t.floor_ -> <syft.ast.callable.Callable object at 0x7f2335951640>\n\t.floor_divide -> <syft.ast.callable.Callable object at 0x7f23359516a0>\n\t.floor -> <syft.ast.callable.Callable object at 0x7f2335951700>\n\t.fmod -> <syft.ast.callable.Callable object at 0x7f2335951760>\n\t.frac_ -> <syft.ast.callable.Callable object at 0x7f23359517c0>\n\t.frac -> <syft.ast.callable.Callable object at 0x7f2335951820>\n\t.from_numpy -> <syft.ast.callable.Callable object at 0x7f2335951880>\n\t.gather -> <syft.ast.callable.Callable object at 0x7f23359518e0>\n\t.ge -> <syft.ast.callable.Callable object at 0x7f2335951940>\n\t.geqrf -> <syft.ast.callable.Callable object at 0x7f23359519a0>\n\t.ger -> <syft.ast.callable.Callable object at 0x7f2335951a00>\n\t.get_device -> <syft.ast.callable.Callable object at 0x7f2335951a60>\n\t.gt -> <syft.ast.callable.Callable object at 0x7f2335951ac0>\n\t.hardshrink -> <syft.ast.callable.Callable object at 0x7f2335951b20>\n\t.histc -> <syft.ast.callable.Callable object at 0x7f2335951b80>\n\t.index_add -> <syft.ast.callable.Callable object at 0x7f2335951be0>\n\t.index_copy -> <syft.ast.callable.Callable object at 0x7f2335951c40>\n\t.index_fill -> <syft.ast.callable.Callable object at 0x7f2335951ca0>\n\t.index_put_ -> <syft.ast.callable.Callable object at 0x7f2335951d00>\n\t.index_put -> <syft.ast.callable.Callable object at 0x7f2335951d60>\n\t.index_select -> <syft.ast.callable.Callable object at 0x7f2335951dc0>\n\t.int_repr -> <syft.ast.callable.Callable object at 0x7f2335951e20>\n\t.inverse -> <syft.ast.callable.Callable object at 0x7f2335951e80>\n\t.is_complex -> <syft.ast.callable.Callable object at 0x7f2335951ee0>\n\t.is_distributed -> <syft.ast.callable.Callable object at 0x7f2335951f40>\n\t.is_floating_point -> <syft.ast.callable.Callable object at 0x7f2335951fa0>\n\t.is_nonzero -> <syft.ast.callable.Callable object at 0x7f2335816040>\n\t.is_same_size -> <syft.ast.callable.Callable object at 0x7f23358160a0>\n\t.is_signed -> <syft.ast.callable.Callable object at 0x7f2335816100>\n\t.isclose -> <syft.ast.callable.Callable object at 0x7f2335816160>\n\t.kthvalue -> <syft.ast.callable.Callable object at 0x7f23358161c0>\n\t.le -> <syft.ast.callable.Callable object at 0x7f2335816220>\n\t.lerp -> <syft.ast.callable.Callable object at 0x7f2335816280>\n\t.lgamma -> <syft.ast.callable.Callable object at 0x7f23358162e0>\n\t.log_ -> <syft.ast.callable.Callable object at 0x7f2335816340>\n\t.log_softmax -> <syft.ast.callable.Callable object at 0x7f23358163a0>\n\t.log -> <syft.ast.callable.Callable object at 0x7f2335816400>\n\t.log10_ -> <syft.ast.callable.Callable object at 0x7f2335816460>\n\t.log10 -> <syft.ast.callable.Callable object at 0x7f23358164c0>\n\t.log1p_ -> <syft.ast.callable.Callable object at 0x7f2335816520>\n\t.log1p -> <syft.ast.callable.Callable object at 0x7f2335816580>\n\t.log2_ -> <syft.ast.callable.Callable object at 0x7f23358165e0>\n\t.log2 -> <syft.ast.callable.Callable object at 0x7f2335816640>\n\t.logdet -> <syft.ast.callable.Callable object at 0x7f23358166a0>\n\t.logical_and -> <syft.ast.callable.Callable object at 0x7f2335816700>\n\t.logical_not -> <syft.ast.callable.Callable object at 0x7f2335816760>\n\t.logical_or -> <syft.ast.callable.Callable object at 0x7f23358167c0>\n\t.logical_xor -> <syft.ast.callable.Callable object at 0x7f2335816820>\n\t.logsumexp -> <syft.ast.callable.Callable object at 0x7f2335816880>\n\t.lstsq -> <syft.ast.callable.Callable object at 0x7f23358168e0>\n\t.lt -> <syft.ast.callable.Callable object at 0x7f2335816940>\n\t.lu_solve -> <syft.ast.callable.Callable object at 0x7f23358169a0>\n\t.lu -> <syft.ast.callable.Callable object at 0x7f2335816a00>\n\t.masked_fill -> <syft.ast.callable.Callable object at 0x7f2335816a60>\n\t.masked_scatter -> <syft.ast.callable.Callable object at 0x7f2335816ac0>\n\t.masked_select -> <syft.ast.callable.Callable object at 0x7f2335816b20>\n\t.matmul -> <syft.ast.callable.Callable object at 0x7f2335816b80>\n\t.matrix_power -> <syft.ast.callable.Callable object at 0x7f2335816be0>\n\t.mean -> <syft.ast.callable.Callable object at 0x7f2335816c40>\n\t.mm -> <syft.ast.callable.Callable object at 0x7f2335816ca0>\n\t.mode -> <syft.ast.callable.Callable object at 0x7f2335816d00>\n\t.mul -> <syft.ast.callable.Callable object at 0x7f2335816d60>\n\t.multinomial -> <syft.ast.callable.Callable object at 0x7f2335816dc0>\n\t.mv -> <syft.ast.callable.Callable object at 0x7f2335816e20>\n\t.mvlgamma -> <syft.ast.callable.Callable object at 0x7f2335816e80>\n\t.narrow -> <syft.ast.callable.Callable object at 0x7f2335816ee0>\n\t.ne -> <syft.ast.callable.Callable object at 0x7f2335816f40>\n\t.neg_ -> <syft.ast.callable.Callable object at 0x7f2335816fa0>\n\t.neg -> <syft.ast.callable.Callable object at 0x7f2335818040>\n\t.nonzero -> <syft.ast.callable.Callable object at 0x7f23358180a0>\n\t.norm -> <syft.ast.callable.Callable object at 0x7f2335818100>\n\t.orgqr -> <syft.ast.callable.Callable object at 0x7f2335818160>\n\t.ormqr -> <syft.ast.callable.Callable object at 0x7f23358181c0>\n\t.pinverse -> <syft.ast.callable.Callable object at 0x7f2335818220>\n\t.polygamma -> <syft.ast.callable.Callable object at 0x7f2335818280>\n\t.pow -> <syft.ast.callable.Callable object at 0x7f23358182e0>\n\t.prelu -> <syft.ast.callable.Callable object at 0x7f2335818340>\n\t.q_per_channel_axis -> <syft.ast.callable.Callable object at 0x7f23358183a0>\n\t.q_per_channel_scales -> <syft.ast.callable.Callable object at 0x7f2335818400>\n\t.q_per_channel_zero_points -> <syft.ast.callable.Callable object at 0x7f2335818460>\n\t.q_scale -> <syft.ast.callable.Callable object at 0x7f23358184c0>\n\t.q_zero_point -> <syft.ast.callable.Callable object at 0x7f2335818520>\n\t.qr -> <syft.ast.callable.Callable object at 0x7f2335818580>\n\t.reciprocal_ -> <syft.ast.callable.Callable object at 0x7f23358185e0>\n\t.reciprocal -> <syft.ast.callable.Callable object at 0x7f2335818640>\n\t.relu_ -> <syft.ast.callable.Callable object at 0x7f23358186a0>\n\t.relu -> <syft.ast.callable.Callable object at 0x7f2335818700>\n\t.remainder -> <syft.ast.callable.Callable object at 0x7f2335818760>\n\t.renorm -> <syft.ast.callable.Callable object at 0x7f23358187c0>\n\t.repeat_interleave -> <syft.ast.callable.Callable object at 0x7f2335818820>\n\t.reshape -> <syft.ast.callable.Callable object at 0x7f2335818880>\n\t.resize_as_ -> <syft.ast.callable.Callable object at 0x7f23358188e0>\n\t.roll -> <syft.ast.callable.Callable object at 0x7f2335818940>\n\t.rot90 -> <syft.ast.callable.Callable object at 0x7f23358189a0>\n\t.round_ -> <syft.ast.callable.Callable object at 0x7f2335818a00>\n\t.round -> <syft.ast.callable.Callable object at 0x7f2335818a60>\n\t.rsqrt_ -> <syft.ast.callable.Callable object at 0x7f2335818ac0>\n\t.rsqrt -> <syft.ast.callable.Callable object at 0x7f2335818b20>\n\t.scatter_add -> <syft.ast.callable.Callable object at 0x7f2335818b80>\n\t.scatter -> <syft.ast.callable.Callable object at 0x7f2335818be0>\n\t.select -> <syft.ast.callable.Callable object at 0x7f2335818c40>\n\t.sigmoid_ -> <syft.ast.callable.Callable object at 0x7f2335818ca0>\n\t.sigmoid -> <syft.ast.callable.Callable object at 0x7f2335818d00>\n\t.sign -> <syft.ast.callable.Callable object at 0x7f2335818d60>\n\t.sin_ -> <syft.ast.callable.Callable object at 0x7f2335818dc0>\n\t.sin -> <syft.ast.callable.Callable object at 0x7f2335818e20>\n\t.sinh_ -> <syft.ast.callable.Callable object at 0x7f2335818e80>\n\t.sinh -> <syft.ast.callable.Callable object at 0x7f2335818ee0>\n\t.slogdet -> <syft.ast.callable.Callable object at 0x7f2335818f40>\n\t.softmax -> <syft.ast.callable.Callable object at 0x7f2335818fa0>\n\t.solve -> <syft.ast.callable.Callable object at 0x7f2335821040>\n\t.sort -> <syft.ast.callable.Callable object at 0x7f23358210a0>\n\t.split_with_sizes -> <syft.ast.callable.Callable object at 0x7f2335821100>\n\t.split -> <syft.ast.callable.Callable object at 0x7f2335821160>\n\t.sqrt_ -> <syft.ast.callable.Callable object at 0x7f23358211c0>\n\t.sqrt -> <syft.ast.callable.Callable object at 0x7f2335821220>\n\t.square_ -> <syft.ast.callable.Callable object at 0x7f2335821280>\n\t.square -> <syft.ast.callable.Callable object at 0x7f23358212e0>\n\t.squeeze -> <syft.ast.callable.Callable object at 0x7f2335821340>\n\t.stack -> <syft.ast.callable.Callable object at 0x7f23358213a0>\n\t.std -> <syft.ast.callable.Callable object at 0x7f2335821400>\n\t.stft -> <syft.ast.callable.Callable object at 0x7f2335821460>\n\t.sub -> <syft.ast.callable.Callable object at 0x7f23358214c0>\n\t.sum -> <syft.ast.callable.Callable object at 0x7f2335821520>\n\t.svd -> <syft.ast.callable.Callable object at 0x7f2335821580>\n\t.symeig -> <syft.ast.callable.Callable object at 0x7f23358215e0>\n\t.t -> <syft.ast.callable.Callable object at 0x7f2335821640>\n\t.take -> <syft.ast.callable.Callable object at 0x7f23358216a0>\n\t.tan_ -> <syft.ast.callable.Callable object at 0x7f2335821700>\n\t.tan -> <syft.ast.callable.Callable object at 0x7f2335821760>\n\t.tanh_ -> <syft.ast.callable.Callable object at 0x7f23358217c0>\n\t.tanh -> <syft.ast.callable.Callable object at 0x7f2335821820>\n\t.topk -> <syft.ast.callable.Callable object at 0x7f2335821880>\n\t.trace -> <syft.ast.callable.Callable object at 0x7f23358218e0>\n\t.transpose -> <syft.ast.callable.Callable object at 0x7f2335821940>\n\t.triangular_solve -> <syft.ast.callable.Callable object at 0x7f23358219a0>\n\t.tril -> <syft.ast.callable.Callable object at 0x7f2335821a00>\n\t.triu -> <syft.ast.callable.Callable object at 0x7f2335821a60>\n\t.true_divide -> <syft.ast.callable.Callable object at 0x7f2335821ac0>\n\t.trunc_ -> <syft.ast.callable.Callable object at 0x7f2335821b20>\n\t.trunc -> <syft.ast.callable.Callable object at 0x7f2335821b80>\n\t.unique_consecutive -> <syft.ast.callable.Callable object at 0x7f2335821be0>\n\t.unique -> <syft.ast.callable.Callable object at 0x7f2335821c40>\n\t.unsqueeze -> <syft.ast.callable.Callable object at 0x7f2335821ca0>\n\t.var -> <syft.ast.callable.Callable object at 0x7f2335821d00>\n\t.unsafe_chunk -> <syft.ast.callable.Callable object at 0x7f2335821d60>\n\t.absolute -> <syft.ast.callable.Callable object at 0x7f2335821dc0>\n\t.acosh_ -> <syft.ast.callable.Callable object at 0x7f2335821e20>\n\t.acosh -> <syft.ast.callable.Callable object at 0x7f2335821e80>\n\t.asinh_ -> <syft.ast.callable.Callable object at 0x7f2335821ee0>\n\t.asinh -> <syft.ast.callable.Callable object at 0x7f2335821f40>\n\t.atanh_ -> <syft.ast.callable.Callable object at 0x7f2335821fa0>\n\t.atanh -> <syft.ast.callable.Callable object at 0x7f2335826040>\n\t.deg2rad_ -> <syft.ast.callable.Callable object at 0x7f23358260a0>\n\t.deg2rad -> <syft.ast.callable.Callable object at 0x7f2335826100>\n\t.fliplr -> <syft.ast.callable.Callable object at 0x7f2335826160>\n\t.flipud -> <syft.ast.callable.Callable object at 0x7f23358261c0>\n\t.isfinite -> <syft.ast.callable.Callable object at 0x7f2335826220>\n\t.isinf -> <syft.ast.callable.Callable object at 0x7f2335826280>\n\t.isnan -> <syft.ast.callable.Callable object at 0x7f23358262e0>\n\t.logaddexp -> <syft.ast.callable.Callable object at 0x7f2335826340>\n\t.logaddexp2 -> <syft.ast.callable.Callable object at 0x7f23358263a0>\n\t.logcumsumexp -> <syft.ast.callable.Callable object at 0x7f2335826400>\n\t.rad2deg_ -> <syft.ast.callable.Callable object at 0x7f2335826460>\n\t.rad2deg -> <syft.ast.callable.Callable object at 0x7f23358264c0>\n\t.istft -> <syft.ast.callable.Callable object at 0x7f2335826520>\n\t.amax -> <syft.ast.callable.Callable object at 0x7f2335826580>\n\t.amin -> <syft.ast.callable.Callable object at 0x7f23358265e0>\n\t.arccos -> <syft.ast.callable.Callable object at 0x7f2335826640>\n\t.arccos_ -> <syft.ast.callable.Callable object at 0x7f23358266a0>\n\t.arccosh -> <syft.ast.callable.Callable object at 0x7f2335826700>\n\t.arccosh_ -> <syft.ast.callable.Callable object at 0x7f2335826760>\n\t.arcsin -> <syft.ast.callable.Callable object at 0x7f23358267c0>\n\t.arcsin_ -> <syft.ast.callable.Callable object at 0x7f2335826820>\n\t.arcsinh -> <syft.ast.callable.Callable object at 0x7f2335826880>\n\t.arcsinh_ -> <syft.ast.callable.Callable object at 0x7f23358268e0>\n\t.arctan -> <syft.ast.callable.Callable object at 0x7f2335826940>\n\t.arctan_ -> <syft.ast.callable.Callable object at 0x7f23358269a0>\n\t.arctanh -> <syft.ast.callable.Callable object at 0x7f2335826a00>\n\t.arctanh_ -> <syft.ast.callable.Callable object at 0x7f2335826a60>\n\t.clip -> <syft.ast.callable.Callable object at 0x7f2335826ac0>\n\t.clip_ -> <syft.ast.callable.Callable object at 0x7f2335826b20>\n\t.count_nonzero -> <syft.ast.callable.Callable object at 0x7f2335826b80>\n\t.divide -> <syft.ast.callable.Callable object at 0x7f2335826be0>\n\t.exp2 -> <syft.ast.callable.Callable object at 0x7f2335826c40>\n\t.exp2_ -> <syft.ast.callable.Callable object at 0x7f2335826ca0>\n\t.fix -> <syft.ast.callable.Callable object at 0x7f2335826d00>\n\t.fix_ -> <syft.ast.callable.Callable object at 0x7f2335826d60>\n\t.gcd -> <syft.ast.callable.Callable object at 0x7f2335826dc0>\n\t.gcd_ -> <syft.ast.callable.Callable object at 0x7f2335826e20>\n\t.greater -> <syft.ast.callable.Callable object at 0x7f2335826e80>\n\t.greater_equal -> <syft.ast.callable.Callable object at 0x7f2335826ee0>\n\t.heaviside -> <syft.ast.callable.Callable object at 0x7f2335826f40>\n\t.hypot -> <syft.ast.callable.Callable object at 0x7f2335826fa0>\n\t.i0 -> <syft.ast.callable.Callable object at 0x7f2335829040>\n\t.i0_ -> <syft.ast.callable.Callable object at 0x7f23358290a0>\n\t.isneginf -> <syft.ast.callable.Callable object at 0x7f2335829100>\n\t.isposinf -> <syft.ast.callable.Callable object at 0x7f2335829160>\n\t.isreal -> <syft.ast.callable.Callable object at 0x7f23358291c0>\n\t.lcm -> <syft.ast.callable.Callable object at 0x7f2335829220>\n\t.lcm_ -> <syft.ast.callable.Callable object at 0x7f2335829280>\n\t.less -> <syft.ast.callable.Callable object at 0x7f23358292e0>\n\t.less_equal -> <syft.ast.callable.Callable object at 0x7f2335829340>\n\t.logit -> <syft.ast.callable.Callable object at 0x7f23358293a0>\n\t.logit_ -> <syft.ast.callable.Callable object at 0x7f2335829400>\n\t.maximum -> <syft.ast.callable.Callable object at 0x7f2335829460>\n\t.minimum -> <syft.ast.callable.Callable object at 0x7f23358294c0>\n\t.matrix_exp -> <syft.ast.callable.Callable object at 0x7f2335829520>\n\t.multiply -> <syft.ast.callable.Callable object at 0x7f2335829580>\n\t.nanquantile -> <syft.ast.callable.Callable object at 0x7f23358295e0>\n\t.nansum -> <syft.ast.callable.Callable object at 0x7f2335829640>\n\t.negative -> <syft.ast.callable.Callable object at 0x7f23358296a0>\n\t.negative_ -> <syft.ast.callable.Callable object at 0x7f2335829700>\n\t.nextafter -> <syft.ast.callable.Callable object at 0x7f2335829760>\n\t.outer -> <syft.ast.callable.Callable object at 0x7f23358297c0>\n\t.quantile -> <syft.ast.callable.Callable object at 0x7f2335829820>\n\t.sgn -> <syft.ast.callable.Callable object at 0x7f2335829880>\n\t.signbit -> <syft.ast.callable.Callable object at 0x7f23358298e0>\n\t.subtract -> <syft.ast.callable.Callable object at 0x7f2335829940>\n\t.unsafe_split -> <syft.ast.callable.Callable object at 0x7f23358299a0>\n\t.vdot -> <syft.ast.callable.Callable object at 0x7f2335829a00>\n\t.movedim -> <syft.ast.callable.Callable object at 0x7f2335829a60>\n\t.unsafe_split_with_sizes -> <syft.ast.callable.Callable object at 0x7f2335829ac0>\n\t.cuda -> Module:\n\t\t.is_available -> <syft.ast.callable.Callable object at 0x7f2335829b80>\n\n\t.device -> <syft.ast.klass.Class object at 0x7f2335829be0>\n\t.random -> Module:\n\t\t.initial_seed -> <syft.ast.callable.Callable object at 0x7f2335829d60>\n\n\t.zeros_like -> <syft.ast.callable.Callable object at 0x7f2335829dc0>\n\t.manual_seed -> <syft.ast.callable.Callable object at 0x7f2335829e20>\n\t.Generator -> <syft.ast.klass.Class object at 0x7f2335829e80>\n\t.utils -> Module:\n\t\t.data -> Module:\n\t\t\t.DataLoader -> <syft.ast.klass.Class object at 0x7f23358371c0>\n\t\t\t.dataloader -> Module:\n\t\t\t\t._SingleProcessDataLoaderIter -> <syft.ast.klass.Class object at 0x7f2335837400>\n\n\n\n\t.optim -> Module:\n\t\t.ASGD -> <syft.ast.klass.Class object at 0x7f23358377c0>\n\t\t.Adadelta -> <syft.ast.klass.Class object at 0x7f2335837940>\n\t\t.Adagrad -> <syft.ast.klass.Class object at 0x7f2335837ac0>\n\t\t.Adam -> <syft.ast.klass.Class object at 0x7f2335837c40>\n\t\t.AdamW -> <syft.ast.klass.Class object at 0x7f2335837dc0>\n\t\t.Adamax -> <syft.ast.klass.Class object at 0x7f2335837f40>\n\t\t.LBFGS -> <syft.ast.klass.Class object at 0x7f2335839100>\n\t\t.Optimizer -> <syft.ast.klass.Class object at 0x7f2335839280>\n\t\t.RMSprop -> <syft.ast.klass.Class object at 0x7f2335839460>\n\t\t.Rprop -> <syft.ast.klass.Class object at 0x7f23358395e0>\n\t\t.SGD -> <syft.ast.klass.Class object at 0x7f2335839760>\n\t\t.SparseAdam -> <syft.ast.klass.Class object at 0x7f23358398e0>\n\t\t.lr_scheduler -> Module:\n\t\t\t.StepLR -> <syft.ast.klass.Class object at 0x7f2335839b80>\n\n\n\t.no_grad -> <syft.ast.klass.Class object at 0x7f2335839d60>\n\t.autograd -> Module:\n\t\t.grad_mode -> Module:\n\t\t\t.no_grad -> <syft.ast.klass.Class object at 0x7f2335839ee0>\n\n\n\t.distributions -> Module:\n\t\t.Categorical -> <syft.ast.klass.Class object at 0x7f233609b160>\n\n\t.kron -> <syft.ast.callable.Callable object at 0x7f233609b700>\n\t.msort -> <syft.ast.callable.Callable object at 0x7f233609b820>\n\t.row_stack -> <syft.ast.callable.Callable object at 0x7f233609b880>\n\t.moveaxis -> <syft.ast.callable.Callable object at 0x7f233609bb80>\n\t.tensor_split -> <syft.ast.callable.Callable object at 0x7f233609bca0>\n\t.tile -> <syft.ast.callable.Callable object at 0x7f233609bdc0>\n\t.fmin -> <syft.ast.callable.Callable object at 0x7f233609bfa0>\n\t.ldexp -> <syft.ast.callable.Callable object at 0x7f23360a3040>\n\t.igamma -> <syft.ast.callable.Callable object at 0x7f23360a3160>\n\t.float_power -> <syft.ast.callable.Callable object at 0x7f23360a3640>\n\t.xlogy -> <syft.ast.callable.Callable object at 0x7f23360a3760>\n\t.copysign -> <syft.ast.callable.Callable object at 0x7f23360a37c0>\n\t.nanmedian -> <syft.ast.callable.Callable object at 0x7f23360a3820>\n\t.igammac -> <syft.ast.callable.Callable object at 0x7f23360a3880>\n\t.diff -> <syft.ast.callable.Callable object at 0x7f23360a39a0>\n\t.sinc -> <syft.ast.callable.Callable object at 0x7f23360a3ac0>\n\t.column_stack -> <syft.ast.callable.Callable object at 0x7f23360a3ca0>\n\t.pixel_unshuffle -> <syft.ast.callable.Callable object at 0x7f23360a3dc0>\n\t.swapaxes -> <syft.ast.callable.Callable object at 0x7f23360aa0a0>\n\t.nan_to_num -> <syft.ast.callable.Callable object at 0x7f23360aa100>\n\t.inner -> <syft.ast.callable.Callable object at 0x7f23360aa160>\n\t.fmax -> <syft.ast.callable.Callable object at 0x7f23360aa1c0>\n\t.ravel -> <syft.ast.callable.Callable object at 0x7f23360aa520>\n\t.broadcast_to -> <syft.ast.callable.Callable object at 0x7f23360aa580>\n\t.swapdims -> <syft.ast.callable.Callable object at 0x7f23360aa760>"
+          },
+          "metadata": {}
+        }
+      ],
+      "execution_count": 9,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1631105419091
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from syft.core.common.uid import UID\n",
+        "from syft.lib.python import String\n",
+        "\n",
+        "type_str = String(\"cuda:0\")\n",
+        "str_pointer = type_str.send(client)\n",
+        "device_pointer = remote_torch.device(str_pointer)"
+      ],
+      "outputs": [],
+      "execution_count": 10,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1631105601085
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "type(device_pointer).__name__"
+      ],
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "execution_count": 13,
+          "data": {
+            "text/plain": "'devicePointer'"
+          },
+          "metadata": {}
+        }
+      ],
+      "execution_count": 13,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1631105627103
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "device_pointer.id_at_location"
+      ],
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "execution_count": 14,
+          "data": {
+            "text/plain": "<UID: ceb77e04f8e34c7dbc7c0f98ca48822a>"
+          },
+          "metadata": {}
+        }
+      ],
+      "execution_count": 14,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1631105654507
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "outputs": [],
+      "execution_count": null,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "name": "syftenv2",
+      "language": "python",
+      "display_name": "SyftEnv2"
+    },
+    "language_info": {
+      "name": "python",
+      "version": "3.9.6",
+      "mimetype": "text/x-python",
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "pygments_lexer": "ipython3",
+      "nbconvert_exporter": "python",
+      "file_extension": ".py"
+    },
+    "kernel_info": {
+      "name": "syftenv2"
+    },
+    "nteract": {
+      "version": "nteract-front-end@1.0.0"
+    },
+    "microsoft": {
+      "host": {
+        "AzureML": {
+          "notebookHasBeenCompleted": true
+        }
+      }
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 2
+}
